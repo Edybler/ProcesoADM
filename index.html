@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Desafío Administrativo</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        background-image: url("https://images.unsplash.com/photo-1554224154-22dec7ec8818?auto=format&fit=crop&w=1600&q=80");
+        background-size: cover;
+        background-position: center;
+        padding: 30px;
+        text-align: center;
+        color: #fff;
+      }
+      #quiz-container {
+        background: rgba(0, 0, 0, 0.7);
+        padding: 20px;
+        border-radius: 10px;
+        max-width: 700px;
+        margin: auto;
+        box-shadow: 0 0 15px rgba(0, 0, 0, 0.3);
+      }
+      .question {
+        font-size: 20px;
+        margin-bottom: 20px;
+      }
+      .option {
+        background: #007bff;
+        color: white;
+        border: none;
+        margin: 10px;
+        padding: 10px 20px;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 16px;
+      }
+      .option:hover {
+        background: #0056b3;
+      }
+      #btn-siguiente {
+        background: #28a745;
+        color: white;
+        border: none;
+        margin: 10px;
+        padding: 10px 20px;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 16px;
+      }
+      #btn-siguiente:hover:enabled {
+        background: #218838;
+      }
+      #btn-siguiente:disabled {
+        background: #6c757d;
+        cursor: not-allowed;
+      }
+      #result,
+      #score,
+      #timer,
+      #level {
+        margin-top: 20px;
+        font-weight: bold;
+      }
+      #score {
+        color: #00ff00;
+      }
+      #timer {
+        color: #ff6347;
+      }
+      #level {
+        color: #87ceeb;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Reproductor de SoundCloud -->
+    <div style="margin-bottom: 30px">
+      <h3>🎧 Música para trabajar y concentrarse:</h3>
+      <iframe
+        id="soundcloud-player"
+        width="100%"
+        height="166"
+        scrolling="no"
+        frameborder="no"
+        allow="autoplay"
+        src="https://w.soundcloud.com/player/?url=https%3A//soundcloud.com/fernando-neymar-zamarron/hiphop-rap-instrumentals-rap&color=%23161616&auto_play=true&hide_related=false&show_comments=true&show_user=true&show_reposts=false&show_teaser=true"
+      ></iframe>
+    </div>
+
+    <div id="quiz-container">
+      <div id="level">Nivel: 1</div>
+      <div id="score">Puntaje: 0</div>
+      <div id="timer">Tiempo restante: 30s</div>
+      <div id="question-container">
+        <div class="question" id="question">Cargando pregunta...</div>
+        <div id="options"></div>
+      </div>
+      <div id="result"></div>
+      <button id="btn-siguiente" onclick="nextQuestion()" disabled>
+        Siguiente
+      </button>
+    </div>
+
+    <!-- Cargar archivo externo con las 105 preguntas -->
+    <script src="preguntas_administracion.js"></script>
+
+    <script>
+      // Intentar reproducir el audio automáticamente al cargar la página
+      window.onload = function () {
+        showQuestion();
+
+        // Intentar reproducir el iframe (aunque navegadores pueden bloquearlo)
+        const iframe = document.getElementById("soundcloud-player");
+        const iframeWindow = iframe.contentWindow;
+        // No podemos controlar directamente la reproducción dentro del iframe,
+        // pero el parámetro auto_play=true ayuda a que intente empezar.
+
+        // Como solución adicional, podemos pedir interacción al usuario (opcional)
+        // para desbloquear el autoplay si el navegador lo bloquea.
+      };
+
+      const niveles = [];
+      for (let i = 0; i < preguntasOriginales.length; i += 5) {
+        niveles.push(preguntasOriginales.slice(i, i + 5));
+      }
+
+      let nivelActual = 0;
+      let preguntaActual = 0;
+      let puntaje = 0;
+      let tiempo = 30;
+      let timer;
+
+      function showQuestion() {
+        clearInterval(timer);
+        tiempo = 30;
+        startTimer();
+
+        const pregunta = niveles[nivelActual][preguntaActual];
+        document.getElementById("question").innerText = pregunta.question;
+        document.getElementById("level").innerText = `Nivel: ${
+          nivelActual + 1
+        }`;
+        document.getElementById("score").innerText = `Puntaje: ${puntaje}`;
+        const optionsContainer = document.getElementById("options");
+        optionsContainer.innerHTML = "";
+        pregunta.options.forEach((opcion, index) => {
+          const btn = document.createElement("button");
+          btn.className = "option";
+          btn.innerText = opcion;
+          btn.onclick = () => checkAnswer(index);
+          optionsContainer.appendChild(btn);
+        });
+        document.getElementById("result").innerText = "";
+
+        // Deshabilitar botón siguiente hasta que respondan
+        document.getElementById("btn-siguiente").disabled = true;
+      }
+
+      function checkAnswer(index) {
+        const correcta = niveles[nivelActual][preguntaActual].answer;
+        const result = document.getElementById("result");
+        const opciones = document.querySelectorAll(".option");
+
+        opciones.forEach((btn) => (btn.disabled = true)); // desactivar botones de opciones
+
+        if (index === correcta) {
+          result.innerText = "✅ ¡Correcto!";
+          result.style.color = "#00FF00";
+          puntaje += 10;
+        } else {
+          result.innerText = `❌ Incorrecto. La respuesta correcta era: "${niveles[nivelActual][preguntaActual].options[correcta]}"`;
+          result.style.color = "#FF4500";
+        }
+        clearInterval(timer);
+
+        // Habilitar botón siguiente para avanzar
+        document.getElementById("btn-siguiente").disabled = false;
+      }
+
+      function nextQuestion() {
+        preguntaActual++;
+        if (preguntaActual < niveles[nivelActual].length) {
+          showQuestion();
+        } else {
+          nivelActual++;
+          preguntaActual = 0;
+          if (nivelActual < niveles.length) {
+            showQuestion();
+          } else {
+            document.getElementById(
+              "quiz-container"
+            ).innerHTML = `<h2>🎉 Juego terminado</h2><p>Puntaje final: ${puntaje}</p>`;
+          }
+        }
+      }
+
+      function startTimer() {
+        document.getElementById(
+          "timer"
+        ).innerText = `Tiempo restante: ${tiempo}s`;
+        timer = setInterval(() => {
+          tiempo--;
+          document.getElementById(
+            "timer"
+          ).innerText = `Tiempo restante: ${tiempo}s`;
+          if (tiempo <= 0) {
+            clearInterval(timer);
+            document.getElementById("result").innerText = "⏰ Tiempo agotado!";
+            document.getElementById("result").style.color = "orange";
+
+            // Desactivar opciones
+            document
+              .querySelectorAll(".option")
+              .forEach((btn) => (btn.disabled = true));
+
+            // Habilitar botón siguiente para avanzar
+            document.getElementById("btn-siguiente").disabled = false;
+
+            // Ir a la siguiente pregunta tras breve pausa
+            setTimeout(nextQuestion, 1500); // Espera 1.5 segundos antes de pasar
+          }
+        }, 1000);
+      }
+    </script>
+  </body>
+</html>
